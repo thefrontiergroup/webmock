@@ -27,6 +27,10 @@ module WebMock
     }
   end
 
+  def self.query_value_options(&blk)
+    Config.instance.query_value_options = blk
+  end
+
   def self.allow_net_connect!(options = {})
     Config.instance.allow_net_connect = true
     Config.instance.net_http_connect_on_start = options[:net_http_connect_on_start]
@@ -52,12 +56,12 @@ module WebMock
     WebMock::RequestRegistry.instance.reset!
     WebMock::StubRegistry.instance.reset!
   end
-  
+
   def self.reset_webmock
     WebMock::Deprecation.warning("WebMock.reset_webmock is deprecated. Please use WebMock.reset! method instead")
     reset!
   end
-  
+
   def self.reset_callbacks
     WebMock::CallbackRegistry.reset
   end

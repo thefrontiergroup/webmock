@@ -77,7 +77,7 @@ module WebMock
 
     def matches?(uri)
       WebMock::Util::URI.variations_of_uri_as_strings(uri).any? { |u| u.match(@pattern) } &&
-        (@query_params.nil? || @query_params == uri.query_values)
+        (@query_params.nil? || @query_params == WebMock::Util::URI.query_values_for(uri))
     end
 
     def to_s
@@ -87,7 +87,11 @@ module WebMock
     end
 
     def add_query_params(query_params)
-      @query_params = query_params.is_a?(Hash) ? query_params : Addressable::URI.parse('?' + query_params).query_values
+      if query_params.is_a?(Hash)
+        @query_params = query_params
+      else
+        @query_params = WebMock::Util::URI.query_values_for(Addressable::URI.parse('?' + query_params))
+      end
     end
 
   end
@@ -103,9 +107,9 @@ module WebMock
 
     def add_query_params(query_params)
       if !query_params.is_a?(Hash)
-        query_params = Addressable::URI.parse('?' + query_params).query_values
+        query_params = WebMock::Util::URI.query_values_for(Addressable::URI.parse('?' + query_params))
       end
-      @pattern.query_values = (@pattern.query_values || {}).merge(query_params)
+      @pattern.query_values = (WebMock::Util::URI.query_values_for(@pattern) || {}).merge(query_params)
     end
 
     def to_s
@@ -147,7 +151,8 @@ module WebMock
         when :xml then
           Crack::XML.parse(body) == @pattern
         else
-          Addressable::URI.parse('?' + body).query_values == @pattern
+          query_values = WebMock::Util::URI.query_values_for(Addressable::URI.parse('?' + body))
+          query_values == @pattern
         end
       else
         empty_string?(@pattern) && empty_string?(body) ||
